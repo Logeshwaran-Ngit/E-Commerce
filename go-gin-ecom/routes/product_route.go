@@ -5,5 +5,5 @@ import (
 )
 
 func ProductRoute(r *gin.Engine) {
-	r.POST("/user")
+	r.POST("/users")
 }
