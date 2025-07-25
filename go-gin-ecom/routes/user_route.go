@@ -2,7 +2,7 @@ package routes
 
 import (
 	"myapp/go-gin-ecom/controllers"
-	"myapp/go/gin-ecom/middleware"
+	"myapp/go-gin-ecom/middleware"
 
 	"github.com/gin-gonic/gin"
 )

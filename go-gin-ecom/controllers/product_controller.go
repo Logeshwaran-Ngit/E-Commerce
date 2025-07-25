@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"myapp/go-gin-ecom/background_job"
 	"myapp/go-gin-ecom/config"
 	"myapp/go-gin-ecom/models"
 	"net/http"
@@ -73,7 +74,7 @@ type ProductOrderRequest struct {
 }
 
 func PlaceOrder(c *gin.Context) {
-	// ✅ Get user ID from context (JWT middleware must set this)
+
 	userIDVal, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -151,7 +152,6 @@ func PlaceOrder(c *gin.Context) {
 		return
 	}
 
-	// Optional email confirmation
 	emailData := map[string]string{
 		"Name":        req.Name,
 		"OrderID":     orderID,
@@ -160,7 +160,7 @@ func PlaceOrder(c *gin.Context) {
 	}
 
 	go func() {
-		if err := background_job.SendOrderConfirmation(req.Email, emailData, 1); err != nil {
+		if err := background_job.SendOrderConfirmation(req.Email, emailData); err != nil {
 			log.Println("Background email error:", err)
 		}
 	}()
