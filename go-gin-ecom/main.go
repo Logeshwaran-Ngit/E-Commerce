@@ -12,7 +12,14 @@ import (
 func main() {
 	r := gin.Default()
 	config.Connect()
-	err := config.DB.AutoMigrate(&models.Users{}, &models.Product{}, &models.Add_cart{}, &models.ProductOrder{}, &models.OrderProduct{})
+	err := config.DB.AutoMigrate(
+		&models.Users{},        // Create users table first
+		&models.Product{},      // Then products
+		&models.Add_cart{},     // Then add_carts (depends on both above)
+		&models.ProductOrder{}, // Then product_orders
+		&models.OrderProduct{}, // Then order_products
+	)
+
 	if err != nil {
 		log.Fatal("Failed to auto-migrate:", err)
 	}

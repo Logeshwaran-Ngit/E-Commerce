@@ -66,8 +66,9 @@ func User_signin(c *gin.Context) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":  user.ID,
-		"Role": user.Role,
-		"exp":  time.Now().Add(time.Hour * 24 * 1).Unix()})
+		"role": user.Role,
+		"exp":  time.Now().Add(time.Hour * 24).Unix(),
+	})
 	tokenstring, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
 		c.JSON(403, gin.H{"error": "could not create a token"})

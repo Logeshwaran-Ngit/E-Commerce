@@ -2,31 +2,63 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func RoleAuthorization(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		roleVal, exists := c.Get("role")
-		if !exists {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Role not found in context"})
+		// 1. Get token from cookie
+		tokenStr, err := c.Cookie("Authorization")
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization cookie not found"})
 			return
 		}
 
-		role, ok := roleVal.(string)
+		// 2. Parse token
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("SECRET")), nil
+		})
+
+		if err != nil || !token.Valid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			return
+		}
+
+		// 3. Extract claims
+		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Invalid role format"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			return
 		}
 
+		userID, ok1 := claims["sub"].(float64)
+		role, ok2 := claims["role"].(string)
+
+		if !ok1 || !ok2 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing token values"})
+			return
+		}
+
+		// 4. Check if role is allowed
+		isAllowed := false
 		for _, allowed := range allowedRoles {
 			if role == allowed {
-				c.Next()
-				return
+				isAllowed = true
+				break
 			}
 		}
 
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Access denied for this role"})
+		if !isAllowed {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Access denied for this role"})
+			return
+		}
+
+		// 5. Set context and continue
+		c.Set("user_id", uint(userID))
+		c.Set("role", role)
+		c.Next()
 	}
 }
