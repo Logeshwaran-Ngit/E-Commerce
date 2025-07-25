@@ -13,5 +13,4 @@ func CartRoutes(r *gin.Engine) {
 	r.GET("/cart", middleware.RoleAuthorization("admin", "user"), controllers.GetUserCart)
 	r.PUT("/cart/:id", middleware.RoleAuthorization("admin", "user"), controllers.UpdateCartStock)
 	r.DELETE("/cart/:id", middleware.RoleAuthorization("admin", "user"), controllers.RemoveFromCart)
-
 }

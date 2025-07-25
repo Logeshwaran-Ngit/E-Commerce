@@ -22,7 +22,7 @@ func SendOrderConfirmation(toEmail string, data map[string]string) error {
 		return err
 	}
 	log.Println("Email body rendered:", body.String())
-	from := mail.NewEmail("E-MART Store", os.Getenv("FROM_EMAIL"))
+	from := mail.NewEmail("E-MART", os.Getenv("FROM_EMAIL"))
 	subject := "Your Order Confirmation - E-MART"
 	content := mail.NewContent("text/html", body.String())
 	message := mail.NewV3Mail()
