@@ -10,14 +10,11 @@ import (
 
 func RoleAuthorization(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 1. Get token from cookie
 		tokenStr, err := c.Cookie("Authorization")
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization cookie not found"})
 			return
 		}
-
-		// 2. Parse token
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("SECRET")), nil
 		})
@@ -27,7 +24,6 @@ func RoleAuthorization(allowedRoles ...string) gin.HandlerFunc {
 			return
 		}
 
-		// 3. Extract claims
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
@@ -42,7 +38,6 @@ func RoleAuthorization(allowedRoles ...string) gin.HandlerFunc {
 			return
 		}
 
-		// 4. Check if role is allowed
 		isAllowed := false
 		for _, allowed := range allowedRoles {
 			if role == allowed {
@@ -56,7 +51,6 @@ func RoleAuthorization(allowedRoles ...string) gin.HandlerFunc {
 			return
 		}
 
-		// 5. Set context and continue
 		c.Set("user_id", uint(userID))
 		c.Set("role", role)
 		c.Next()

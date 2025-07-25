@@ -45,23 +45,25 @@ func Signup(c *gin.Context) {
 	})
 }
 func User_signin(c *gin.Context) {
-	type Login struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		Role     string `json:"role"`
+	type LoginInput struct {
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required"`
 	}
-	var login Login
-	if err := c.ShouldBindJSON(&login); err != nil {
+
+	var input LoginInput
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	var user models.Users
-	if err := config.DB.First(&user, "email=?", login.Email).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalied email id and possword"})
+	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password)); err != nil {
-		c.JSON(409, gin.H{"error": "invalied password"})
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -69,13 +71,18 @@ func User_signin(c *gin.Context) {
 		"role": user.Role,
 		"exp":  time.Now().Add(time.Hour * 24).Unix(),
 	})
-	tokenstring, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
-		c.JSON(403, gin.H{"error": "could not create a token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
 	}
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", tokenstring, 3600*24*1, "/", "", false, true)
-	c.JSON(200, gin.H{"message": "login successfuly"})
+	c.SetCookie("Authorization", tokenString, 3600*24, "/", "", false, true)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"token":   tokenString,
+		"role":    user.Role,
+	})
 }
 func UpdatebyId(c *gin.Context) {
 	var update models.Users
