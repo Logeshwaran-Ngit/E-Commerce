@@ -44,6 +44,7 @@ func Signup(c *gin.Context) {
 		"user":    user,
 	})
 }
+
 func User_signin(c *gin.Context) {
 	type LoginInput struct {
 		Email    string `json:"email" binding:"required,email"`
@@ -84,6 +85,7 @@ func User_signin(c *gin.Context) {
 		"role":    user.Role,
 	})
 }
+
 func UpdatebyId(c *gin.Context) {
 	var update models.Users
 	if err := c.ShouldBindJSON(&update); err != nil || update.ID == 0 {
@@ -104,13 +106,30 @@ func UpdatebyId(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully", "user": user})
 }
+
 func Add_to_cart(c *gin.Context) {
 	var new_cart models.Add_cart
 	if err := c.ShouldBindJSON(&new_cart); err != nil {
-		c.JSON(400, gin.H{"error": "json file not valied"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON input"})
+		return
 	}
-	err := config.DB.Where("ID = ? AND Product_id = ?", new_cart.User_Id, new_cart.Product_Id).First(&new_cart).Error
-	if err != nil {
-		c.JSON(400, gin.H{"error": "it no product or id is not avliable"})
+
+	var existingCart models.Add_cart
+	err := config.DB.Where("user_id = ? AND product_id = ?", new_cart.User_Id, new_cart.Product_Id).First(&existingCart).Error
+	if err == nil {
+		existingCart.Product_Stock += new_cart.Product_Stock
+		if err := config.DB.Save(&existingCart).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update cart"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Cart updated with new quantity", "cart": existingCart})
+		return
 	}
+
+	if err := config.DB.Create(&new_cart).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add to cart"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product added to cart successfully", "cart": new_cart})
 }

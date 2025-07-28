@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type ProductOrder struct {
 	gorm.Model
-	OrderID        string         `gorm:"uniqueIndex" json:"orderid"`
+	OrderID        string         `json:"orderid"` // Logical order ID like "ORD-12345"
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
 	PhoneNo        string         `json:"phoneno"`
@@ -14,14 +14,14 @@ type ProductOrder struct {
 	DeliveryCharge float64        `json:"deliverycharge"`
 	TotalAmount    float64        `json:"totalamount"`
 	Status         string         `json:"status"`
-	OrderItems     []OrderProduct `gorm:"foreignKey:OrderID;references:OrderID" json:"order_items"`
+	OrderItems     []OrderProduct `gorm:"foreignKey:ProductOrderID" json:"order_items"` // Correct relation
 }
 
 type OrderProduct struct {
-	ID         uint    `gorm:"primaryKey"`
-	OrderID    string  `json:"order_id"`
-	ProductID  uint    `json:"product_id"`
-	Quantity   uint    `json:"quantity"`
-	UnitPrice  float64 `json:"unit_price"`
-	TotalPrice float64 `json:"total_price"`
+	ID             uint    `gorm:"primaryKey"`
+	ProductOrderID uint    `json:"product_order_id"`
+	ProductID      uint    `json:"product_id"`
+	Quantity       uint    `json:"quantity"`
+	UnitPrice      float64 `json:"unit_price"`
+	TotalPrice     float64 `json:"total_price"`
 }

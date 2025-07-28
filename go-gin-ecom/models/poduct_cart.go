@@ -1,15 +1,11 @@
 package models
 
 type Product struct {
-	Product_Id          uint    `gorm:"primaryKey;column:product_id" json:"p_id"`
-	Product_Name        string  `json:"name"`
-	Product_Email       string  `json:"email"`
-	Product_Discrpition string  `json:"discrpition"`
-	Product_Model       string  `json:"model"`
-	Product_Prize       float32 `json:"prize"`
-	Product_Stock       uint    `json:"stock"`
-}
-
-func (Product) TableName() string {
-	return "products"
+	ID          uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	Description string  `json:"description"`
+	Model       string  `json:"model"`
+	Price       float64 `json:"price"`
+	Stock       uint    `json:"stock"`
 }
